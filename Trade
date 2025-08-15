@@ -1,0 +1,56 @@
+import React, { useEffect, useState } from "react"; import { motion, AnimatePresence } from "framer-motion"; import { ChartCandlestick, Newspaper, Calendar as CalendarIcon, Bell } from "lucide-react";
+
+function useTVWidget({ containerId, scriptSrc, config }) { useEffect(() => { const container = document.getElementById(containerId); if (!container) return; container.innerHTML = ""; const script = document.createElement("script"); script.type = "text/javascript"; script.async = true; script.src = scriptSrc; script.innerHTML = JSON.stringify(config); container.appendChild(script); return () => { container.innerHTML = ""; }; }, [containerId, scriptSrc, JSON.stringify(config)]); }
+
+function TVChart({ interval }) { useTVWidget({ containerId: "tv-advanced-chart", scriptSrc: "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js", config: { autosize: true, symbol: "FOREXCOM:XAUUSD", interval, timezone: "Etc/UTC", theme: "dark", style: "1", locale: "en", withdateranges: true, allow_symbol_change: false, save_image: false, studies: ["STD;EMA@tv-basicstudies", "STD;VWAP@tv-basicstudies", "STD;RSI@tv-basicstudies"], hide_side_toolbar: false, hide_volume: false, calendar: true, support_host: "https://www.tradingview.com", }, }); return <div className="w-full h-[70vh] sm:h-[80vh]" id="tv-advanced-chart" />; }
+
+function TVEconomicCalendar() { useTVWidget({ containerId: "tv-econ-calendar", scriptSrc: "https://s3.tradingview.com/external-embedding/embed-widget-events.js", config: { width: "100%", height: "100%", colorTheme: "dark", isTransparent: true, locale: "en", importanceFilter: "1", countryFilter: "US,EU,GB,CN,JP", }, }); return <div className="w-full h-[70vh] sm:h-[80vh]" id="tv-econ-calendar" />; }
+
+function TVMarketNews() { useTVWidget({ containerId: "tv-market-news", scriptSrc: "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js", config: { feedMode: "all_symbols", isTransparent: true, displayMode: "adaptive", width: "100%", height: "100%", colorTheme: "dark", locale: "en", }, }); return <div className="w-full h-[70vh] sm:h-[80vh]" id="tv-market-news" />; }
+
+const TabButton = ({ icon: Icon, label, active, onClick }) => ( <button onClick={onClick} className={flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all ${active ? "bg-white/10 border border-white/20 text-white" : "bg-white/5 text-gray-300"}}
+
+> 
+
+<Icon className="w-5 h-5" />
+<span className="text-sm font-medium">{label}</span>
+
+  </button>
+);export default function XAUUSDScalperTerminal() { const [tab, setTab] = useState("chart"); const [interval, setInterval] = useState("1");
+
+useEffect(() => { const alertBeforeEvent = setInterval(() => { const now = new Date(); const minutes = now.getMinutes(); const seconds = now.getSeconds(); if (minutes === 59 && seconds === 50) { new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg").play(); } }, 1000); return () => clearInterval(alertBeforeEvent); }, []);
+
+return ( <div className="min-h-screen w-full bg-[#0b0f14] text-white flex flex-col"> <header className="px-4 pt-4 pb-2 sticky top-0 z-30 bg-gradient-to-b from-[#0b0f14] to-transparent"> <div className="flex items-center justify-between"> <h1 className="text-lg font-semibold">XAU/USD Scalper Terminal</h1> <div className="flex items-center gap-2 text-xs opacity-75"> <Bell className="w-4 h-4" /> Alerts On </div> </div> <div className="mt-2 text-[11px] opacity-80"> EMA(9,21) • VWAP • RSI(14) • Economic Calendar • Live News </div> <div className="mt-2 flex gap-2"> {["1", "5", "15"].map(tf => ( <button key={tf} onClick={() => setInterval(tf)} className={px-3 py-1 rounded-full text-xs ${interval === tf ? "bg-yellow-500 text-black" : "bg-white/10 text-white"}} > {tf}m </button> ))} </div> </header>
+
+<main className="flex-1 p-3 pt-1">
+    <AnimatePresence mode="wait">
+      {tab === "chart" && (
+        <motion.div key="chart" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="rounded-2xl overflow-hidden border border-white/10">
+          <TVChart interval={interval} />
+        </motion.div>
+      )}
+      {tab === "news" && (
+        <motion.div key="news" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="rounded-2xl overflow-hidden border border-white/10">
+          <TVMarketNews />
+        </motion.div>
+      )}
+      {tab === "calendar" && (
+        <motion.div key="calendar" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="rounded-2xl overflow-hidden border border-white/10">
+          <TVEconomicCalendar />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </main>
+
+  <nav className="sticky bottom-3 px-3 z-30">
+    <div className="flex gap-2 bg-white/5 backdrop-blur rounded-3xl p-2 border border-white/10 shadow-xl">
+      <TabButton icon={ChartCandlestick} label="Chart" active={tab === "chart"} onClick={() => setTab("chart"} />
+      <TabButton icon={Newspaper} label="News" active={tab === "news"} onClick={() => setTab("news"} />
+      <TabButton icon={CalendarIcon} label="Calendar" active={tab === "calendar"} onClick={() => setTab("calendar"} />
+    </div>
+  </nav>
+  <div className="h-6" />
+</div>
+
+); }
+
